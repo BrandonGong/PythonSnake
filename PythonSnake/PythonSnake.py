@@ -162,6 +162,9 @@ class GameBoard(Widget):
     def draw(self):
         self.clear_widgets()
 
+        if self.food.pos[0] > Window.width or self.food.pos[1] > Window.height:
+            self.food.reset_location()
+
         self.add_widget(self.food)
         for w in self.snake:
             self.add_widget(w)
