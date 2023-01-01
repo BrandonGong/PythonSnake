@@ -58,8 +58,7 @@ class GameBoard(Widget):
         self.vel_y = 1
 
         self.game_over = False
-
-
+        
         # Events
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self, 'text')
 
@@ -75,12 +74,17 @@ class GameBoard(Widget):
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
         self._keyboard = None
+
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers) -> bool:
 
         key = keycode[1]
         if key == 'escape':
             App.get_running_app().stop()
             Window.close()
+
+        if key == 'spacebar' and self.game_over:
+            self.reset()
+            return True
 
         vel_x = self.vel_x
         vel_y = self.vel_y
@@ -109,39 +113,49 @@ class GameBoard(Widget):
         if self.game_over:
             return
 
-        new_head = self.snake[0]
+        head = self.snake[0]
         if len(self.snake) > 1:
-            new_head = self.snake.pop()
-            new_head.pos = self.snake[0].pos
+            head = self.snake.pop()
+            head.pos = self.snake[0].pos
 
-
-        x = new_head.pos[0] + self.vel_x * new_head.size[0]
+        # Move the head based on current velocity
+        # snake should wrap around screen when going out of bounds
+        x = head.pos[0] + self.vel_x * head.size[0]
         if x > Window.width:
             x = 0
         elif x < 0:
             x = Window.width
 
-        y = new_head.pos[1] + self.vel_y * new_head.size[1]
+        y = head.pos[1] + self.vel_y * head.size[1]
         if y > Window.height:
             y = 0
         elif y < 0:
             y = Window.height
 
-        new_head.pos = (x,y)
+        head.pos = (x,y)
 
         if len(self.snake) > 1:
             # Check head has collided with body
             for w in self.snake[1:]:
-                if new_head.collide_point(w.center_x,w.center_y):
+                if head.collide_point(w.center_x,w.center_y):
                     self.game_over = True
-        if new_head != self.snake[0]:
-            # Add head back to body
-            self.snake.insert(0,new_head)
-        # Head has left the edge of the Window
 
-        if new_head.collide_widget(self.food):
-            self.snake.insert(0,SnakeBody((new_head.pos[0] + self.vel_x * new_head.size[0], new_head.pos[1] + self.vel_y * new_head.size[1])))
-            self.food.reset_location()
+        if head != self.snake[0]:
+            # Add head back to body
+            self.snake.insert(0,head)
+
+
+        if head.collide_widget(self.food):
+            self.snake.insert(0,SnakeBody((head.pos[0] + self.vel_x * head.size[0], head.pos[1] + self.vel_y * head.size[1])))
+            while True:
+                self.food.reset_location()
+                # check that the food is not overlapping with the snake
+                valid = True
+                for w in self.snake:
+                    if self.food.collide_widget(w):
+                        valid = False
+                if valid:
+                    break
 
         self.draw()
 
@@ -159,7 +173,22 @@ class GameBoard(Widget):
                                   center_y = self.height / 2,
                                   center_x = self.width / 2
                                   ))
-            
+            self.add_widget(Label(text="Press space to continue.",
+                                  font_size=25,
+                                  center_y = self.height / 2 - 35,
+                                  center_x = self.width / 2
+                                  ))
+      
+    def reset(self):
+        self.snake = [SnakeBody((self.size[0]/2,self.size[1]/2))]
+
+        self.food = Food()
+        self.food.reset_location()
+
+        self.vel_x = 0
+        self.vel_y = 1
+
+        self.game_over = False
 '''
     Snake Application
 '''
