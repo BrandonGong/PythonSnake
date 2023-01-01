@@ -114,7 +114,20 @@ class GameBoard(Widget):
             new_head = self.snake.pop()
             new_head.pos = self.snake[0].pos
 
-        new_head.pos = (new_head.pos[0] + self.vel_x * new_head.size[0], new_head.pos[1] + self.vel_y * new_head.size[1])
+
+        x = new_head.pos[0] + self.vel_x * new_head.size[0]
+        if x > Window.width:
+            x = 0
+        elif x < 0:
+            x = Window.width
+
+        y = new_head.pos[1] + self.vel_y * new_head.size[1]
+        if y > Window.height:
+            y = 0
+        elif y < 0:
+            y = Window.height
+
+        new_head.pos = (x,y)
 
         if len(self.snake) > 1:
             # Check head has collided with body
